@@ -39,7 +39,7 @@ p{margin:0;color:var(--mut)}
 <div id="padbox"><div id="pad"></div><div id="padtools"><button id="pe">ボタン配置を編集</button><label>大きさ<input type="range" id="ps" min="0.6" max="2.2" step="0.05" value="1"></label><button id="pr">初期配置に戻す</button><button id="pd">今の配置を初期配置に</button><button id="pf">標準に戻す</button></div></div>
 
 <div class="card" id="olp" style="display:none"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input id="rn" placeholder="部屋の名前（半角英数字）" maxlength="20" autocapitalize="off" autocorrect="off" spellcheck="false" style="flex:1;min-width:140px;box-sizing:border-box;font-size:16px;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px"><button id="rh" style="padding:8px 12px">入室</button><button id="rg" style="padding:8px 12px">対戦開始</button></div><p id="rst" style="margin-top:8px">未接続（友達と同じ部屋の名前を入れて「入室」）</p></div><div class="card" id="set"></div>
-<div class="card"><p>← → 移動 / ↓ ソフトドロップ / Space ハードドロップ / ↑ X 右回転 / Z 左回転 / A 180° / C Shift ホールド / R リスタート</p></div>
+<div class="card"><p>← → 移動 / ↓ ソフトドロップ / Space ハードドロップ / ↑ X 右回転 / Z 左回転 / A 180° / C Shift ホールド / U Backspace 手を戻す / R リスタート</p></div>
 </main>
 <script>
 const W=10,H=22,V=2,C=30,OX=120;
@@ -52,13 +52,13 @@ const KI={'01':[[0,0],[-2,0],[1,0],[-2,-1],[1,2]],'10':[[0,0],[2,0],[-1,0],[2,1]
 let S={das:133,arr:10,sdf:41,grav:1000,lv:2},best=0;
 try{Object.assign(S,JSON.parse(localStorage.getItem('stack.s')||'{}'))}catch(e){}
 const save=()=>{try{localStorage.setItem('stack.s',JSON.stringify(S))}catch(e){}};
-function mk(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function mk(a){const f=()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};f.get=()=>a;f.set=v=>{a=v};return f}
 let O,cr,gr,gc,G,P,R,gAcc,lockT,resets,low,stk=[],curDir=0,dirT=0,acc=0;const held={},D={ArrowLeft:-1,ArrowRight:1};
 let MODE='sprint';try{MODE=localStorage.getItem('stack.mode')||'sprint'}catch(e){}
 if(!['sprint','ultra','cheese','pc','practice','vs','ol'].includes(MODE))MODE='sprint';
 function loadBest(){try{best=+localStorage.getItem('stack.best.'+MODE)||0}catch(e){best=0}}
 let RC=null,REP=null,REPSAVE=null;
-function newGame(seed){G={b:Array.from({length:H},()=>Array(W).fill(0)),q:[],hold:null,can:true,lines:0,pcs:0,time:0,go:0,on:0,gb:0,tk:0,pc:0,pcAt:0,fl:0,os:0,cmb:-1,b2b:0,msg:'',mt:0,inc:0,sent:0,at:0,seed:seed||Date.now()};R=mk(G.seed);cr=mk(G.seed^0x9e3779b9);gr=mk(G.seed+7);gc=0;if(MODE==='vs'||MODE==='ol')O={b:Array.from({length:H},()=>Array(W).fill(0)),q:[],inc:0,cmb:-1,b2b:0,t:800,go:0};G.rt=0;G.st=0;G.sk=0;if(MODE==='ol'&&!seed)G.go=3;olShow();for(const k in held)held[k]=0;stk=[];curDir=0;dirT=0;acc=S.arr;loadBest();RC=REP?null:{seed:G.seed,mode:MODE,S:{...S},ev:[]};
+function newGame(seed){G={b:Array.from({length:H},()=>Array(W).fill(0)),q:[],hold:null,can:true,lines:0,pcs:0,time:0,go:0,on:0,gb:0,tk:0,pc:0,pcAt:0,fl:0,os:0,cmb:-1,b2b:0,msg:'',mt:0,inc:0,sent:0,at:0,sm:0,ap:0,ud:0,us:[],seed:seed||Date.now()};R=mk(G.seed);cr=mk(G.seed^0x9e3779b9);gr=mk(G.seed+7);gc=0;if(MODE==='vs'||MODE==='ol')O={b:Array.from({length:H},()=>Array(W).fill(0)),q:[],inc:0,cmb:-1,b2b:0,t:800,go:0};G.rt=0;G.st=0;G.sk=0;if(MODE==='ol'&&!seed)G.go=3;olShow();for(const k in held)held[k]=0;stk=[];curDir=0;dirT=0;acc=S.arr;loadBest();RC=REP?null:{seed:G.seed,mode:MODE,S:{...S},ev:[]};
  if(MODE==='cheese'){let h=R()*W|0;for(let j=H-10;j<H;j++){if(R()<.3)h=R()*W|0;G.b[j]=Array(W).fill('G');G.b[j][h]=0}G.gb=10}
  spawn()}
 function fill(){while(G.q.length<7){const b=[...'IOTSZJL'];for(let i=6;i>0;i--){const j=R()*(i+1)|0;[b[i],b[j]]=[b[j],b[i]]}G.q.push(...b)}}
@@ -69,16 +69,19 @@ function mv(dx,dy){if(!fits(P.t,P.r,P.x+dx,P.y+dy))return false;P.x+=dx;P.y+=dy;
 function oSpin(){if(P.t!=='O')return;P.ot=(P.ot||[]).filter(t=>G.tk-t<500);P.ot.push(G.tk);if(P.ot.length<3)return;for(const c of [P.x,P.x+1]){for(const[r,o]of[[1,2],[3,1]]){const nx=c-o;if(fits('I',r,nx,P.y)){P.t='I';P.c='O';P.r=r;P.x=nx;G.os=1200;bump();return}}}}
 function spin(d){if(P.t==='O'){if(d===2)oSpin();return}const n=(P.r+d)%4;const k=d===2?[[0,0],[1,0],[-1,0],[0,-1],[0,1]]:(P.t==='I'?KI:KJ)[''+P.r+n].map(([a,b])=>[a,-b]);let ki=0;for(const[a,b]of k){if(fits(P.t,n,P.x+a,P.y+b)){P.r=n;P.x+=a;P.y+=b;P.rot=1;P.kk=d===2?-1:ki;bump();return}ki++}}
 function holdP(){if(!G.can)return;const h=G.hold;G.hold=P.t;spawn(h);G.can=false}
-function finish(){G.go=2;const u=MODE==='ultra',v=u?G.lines:G.time;if(!best||(u?v>best:v<best)){best=v;try{localStorage.setItem('stack.best.'+MODE,best)}catch(e){}}}
+function finish(){G.go=2;const u=MODE==='ultra',v=u?G.lines:G.time;if(!G.ud&&(!best||(u?v>best:v<best))){best=v;try{localStorage.setItem('stack.best.'+MODE,best)}catch(e){}}}
 function win(){const ok=MODE==='sprint'?G.lines>=40:MODE==='cheese'?G.gb<=0:false;if(ok)finish();return ok}
 function tsp(){if(P.t!=='T'||!P.rot)return 0;const c=(i,j)=>{const x=P.x+i,y=P.y+j;return x<0||x>=W||y>=H||(y>=0&&G.b[y][x])};const cs=[c(0,0),c(2,0),c(0,2),c(2,2)];if(cs.filter(Boolean).length<3)return 0;const F=[[0,1],[1,3],[2,3],[0,2]][P.r];return F.every(i=>cs[i])||P.kk===4?2:1}
 function clr(ts,n){let m='';if(!n){G.at=0;G.cmb=-1;if(ts)m='T-SPIN'+(ts===1?' MINI':'')}else{G.cmb++;const hard=n===4||ts>0;G.at=atk(n,ts,hard&&G.b2b>0,G.cmb);m=ts?'T-SPIN'+(ts===1?' MINI ':' ')+['','SINGLE','DOUBLE','TRIPLE'][n]:n===4?'TETRIS':'';if(hard){if(G.b2b>0)m+=' B2B';G.b2b++}else G.b2b=0;if(G.cmb>0)m+=(m?' ':'')+G.cmb+' REN'}if(m){G.msg=m.trim();G.mt=1500}}
-function lock(){const ts=tsp();ROT[P.t][P.r].forEach((row,j)=>row.forEach((v,i)=>{if(v)G.b[P.y+j][P.x+i]=P.c||P.t}));G.pcs++;G.gb-=G.b.filter(r=>r.every(v=>v)&&r.includes('G')).length;G.b=G.b.filter(r=>r.some(v=>!v));const n=H-G.b.length;G.lines+=n;clr(ts,n);while(G.b.length<H)G.b.unshift(Array(W).fill(0));if(G.b.every(r=>r.every(v=>!v))){G.pc++;G.pcAt=G.pcs;G.fl=1500;if(VS())G.at=10}if(VS())vsAtk(n);if(MODE==='pc'&&G.pcs-G.pcAt>=10){G.go=1;return}G.can=true;
+function lock(){G.us.push(snap());if(G.us.length>3000)G.us.shift();const ts=tsp();ROT[P.t][P.r].forEach((row,j)=>row.forEach((v,i)=>{if(v)G.b[P.y+j][P.x+i]=P.c||P.t}));G.pcs++;G.gb-=G.b.filter(r=>r.every(v=>v)&&r.includes('G')).length;G.b=G.b.filter(r=>r.some(v=>!v));const n=H-G.b.length;G.lines+=n;clr(ts,n);while(G.b.length<H)G.b.unshift(Array(W).fill(0));if(G.b.every(r=>r.every(v=>!v))){G.pc++;G.pcAt=G.pcs;G.fl=1500;if(VS())G.at=10}if(VS())vsAtk(n);if(MODE==='pc'&&G.pcs-G.pcAt>=10){G.go=1;return}G.can=true;
  if(win())return;spawn()}
 const CT=[0,0,1,1,2,2,3,3,4,4,4,5];
 function atk(n,ts,bb,cb){if(!n)return 0;let a=ts===2?[0,2,4,6][n]:ts===1?[0,1,2,2][n]:[0,0,1,2,4][n];if(bb)a++;return a+CT[Math.min(cb,11)]}
 function addG(b,n){let ov=0;for(let i=0;i<n;i++){if(i===0||gr()<.3)gc=gr()*W|0;if(b.shift().some(v=>v))ov=1;const r=Array(W).fill('G');r[gc]=0;b.push(r)}return ov}
-function vsAtk(n){let a=G.at;G.at=0;G.sent+=a;const c=Math.min(a,G.inc);G.inc-=c;a-=c;if(a>0){if(MODE==='ol'){G.st+=a;net({k:'atk',g:G.seed,n:G.st})}else O.inc+=a}if(!n&&G.inc>0){if(addG(G.b,G.inc))G.go=1;G.inc=0}if(MODE==='ol')net({k:'b',g:G.seed,s:G.b.slice(V).map(r=>r.map(v=>v||'.').join('')).join('')})}
+function vsAtk(n){let a=G.at;G.at=0;const sm=G.sm;G.sent+=a;G.sm=Math.max(sm,G.sent);a=Math.min(a,Math.max(0,G.sent-sm));const c=Math.min(a,G.inc);G.inc-=c;a-=c;if(a>0){if(MODE==='ol'){G.st+=a;net({k:'atk',g:G.seed,n:G.st})}else O.inc+=a}if(!n&&G.inc>0){G.ap+=G.inc;if(addG(G.b,G.inc))G.go=1;G.inc=0}if(MODE==='ol')net({k:'b',g:G.seed,s:G.b.slice(V).map(r=>r.map(v=>v||'.').join('')).join('')})}
+function snap(){return{b:G.b.map(r=>r.slice()),q:G.q.slice(),hold:G.hold,t:P.t,lines:G.lines,pcs:G.pcs,cmb:G.cmb,b2b:G.b2b,pc:G.pc,pcAt:G.pcAt,gb:G.gb,sent:G.sent,ap:G.ap,R:R.get(),gr:gr.get(),gc}}
+function sendB(){net({k:'b',g:G.seed,s:G.b.slice(V).map(r=>r.map(v=>v||'.').join('')).join('')})}
+function undo(){const s=G.us.pop();if(!s)return;const lost=G.ap-s.ap;if(lost>0)G.inc+=lost;G.ap=s.ap;G.b=s.b;G.q=s.q;G.hold=s.hold;G.lines=s.lines;G.pcs=s.pcs;G.cmb=s.cmb;G.b2b=s.b2b;G.pc=s.pc;G.pcAt=s.pcAt;G.gb=s.gb;G.sent=s.sent;G.at=0;G.msg='';G.mt=0;G.fl=0;G.ud=1;R.set(s.R);gr.set(s.gr);gc=s.gc;G.can=true;spawn(s.t);if(MODE==='ol')sendB()}
 function fB(b,t,r,x,y){return ROT[t][r].every((row,j)=>row.every((v,i)=>!v||(x+i>=0&&x+i<W&&y+j>=0&&y+j<H&&!b[y+j][x+i])))}
 function bag(r){const b=[...'IOTSZJL'];for(let i=6;i>0;i--){const j=r()*(i+1)|0;[b[i],b[j]]=[b[j],b[i]]}return b}
 function cpuTick(){if(O.go||--O.t>0)return;O.t=[1300,700,420][(S.lv||2)-1]||700;cpuMove()}
@@ -99,15 +102,15 @@ function drawVs(){const c=12,ox=420,oy=350;x.fillStyle='#121a31';x.fillRect(ox,o
  if(G.inc>0){x.fillStyle='#e2504f';x.fillRect(OX-7,600-Math.min(G.inc,20)*C,5,Math.min(G.inc,20)*C)}
  if(O.go)txt('KO',ox+60,oy+128,'#fff','bold 22px system-ui,sans-serif','center')}
 function setStk(){const d=stk[stk.length-1]||0;if(d!==curDir){curDir=d;dirT=0;acc=S.arr}}
-function press(k){if(REP&&!REP.inj){if(k==='KeyR')stopReplay();return}if(held[k])return;if(!REP&&!G.go&&k!=='KeyR')RC.ev.push({t:G.tk,k,v:1});held[k]=1;if(k==='KeyR')return newGame();if(G.go)return;G.on=1;
+function press(k){if(REP&&!REP.inj){if(k==='KeyR')stopReplay();return}if(held[k])return;if(!REP&&!G.go&&k!=='KeyR')RC.ev.push({t:G.tk,k,v:1});held[k]=1;if(k==='KeyR')return newGame();if(G.go)return;if(k==='KeyU'||k==='Backspace')return undo();G.on=1;
  if(k in D){stk=stk.filter(d=>d!==D[k]);stk.push(D[k]);mv(D[k],0);setStk()}
  else if(k==='Space'){while(mv(0,1));lock()}
  else if(k==='ArrowUp'||k==='KeyX')spin(1);else if(k==='KeyZ')spin(3);else if(k==='KeyA')spin(2);else if(k==='KeyC'||k==='ShiftLeft')holdP()}
 function release(k){if(REP&&!REP.inj)return;if(!REP&&!G.go)RC.ev.push({t:G.tk,k,v:0});held[k]=0;if(k in D){stk=stk.filter(d=>d!==D[k]);setStk()}}
-function saveRep(){RC.done=1;if(MODE==='ol')return;RC.res={go:G.go,time:G.time,lines:G.lines};const j=JSON.stringify(RC);try{localStorage.setItem('stack.rep.last',j);if(MODE==='pc'?G.pc>0&&G.pc===best:G.go===2&&(MODE==='ultra'?G.lines:G.time)===best)localStorage.setItem('stack.rep.best.'+MODE,j)}catch(e){}}
+function saveRep(){RC.done=1;if(MODE==='ol')return;RC.res={go:G.go,time:G.time,lines:G.lines};const j=JSON.stringify(RC);try{localStorage.setItem('stack.rep.last',j);if(!G.ud&&(MODE==='pc'?G.pc>0&&G.pc===best:G.go===2&&(MODE==='ultra'?G.lines:G.time)===best))localStorage.setItem('stack.rep.best.'+MODE,j)}catch(e){}}
 function playRep(r){if(!r||!r.ev)return;if(!REP)REPSAVE={S:{...S},MODE};REP={ev:r.ev,i:0,sp:1,inj:false};MODE=r.mode;Object.assign(S,r.S);document.getElementById('m').value=MODE;document.getElementById('rs').textContent='速度 ×1';document.getElementById('set').style.pointerEvents='none';newGame(r.seed)}
 function stopReplay(){Object.assign(S,REPSAVE.S);MODE=REPSAVE.MODE;document.getElementById('m').value=MODE;document.getElementById('set').style.pointerEvents='';REP=null;newGame()}
-function step(){if(REP){while(REP.i<REP.ev.length&&REP.ev[REP.i].t<=G.tk){const e=REP.ev[REP.i++];if(e.k==='S')Object.assign(S,e.v);else{REP.inj=true;(e.v?press:release)(e.k);REP.inj=false}}}update(1);if(MODE==='vs'&&!G.go&&G.on){cpuTick();if(O.go)finish()}G.tk++;if(MODE==='ol'&&G.go===1&&!G.sk){G.sk=1;net({k:'ko',g:G.seed})}if(G.fl>0)G.fl--;if(G.os>0)G.os--;if(G.mt>0)G.mt--;if(!REP&&G.go&&RC&&!RC.done){if(MODE==='pc'&&G.pc>best){best=G.pc;try{localStorage.setItem('stack.best.pc',best)}catch(e){}}saveRep()}}
+function step(){if(REP){while(REP.i<REP.ev.length&&REP.ev[REP.i].t<=G.tk){const e=REP.ev[REP.i++];if(e.k==='S')Object.assign(S,e.v);else{REP.inj=true;(e.v?press:release)(e.k);REP.inj=false}}}update(1);if(MODE==='vs'&&!G.go&&G.on){cpuTick();if(O.go)finish()}G.tk++;if(MODE==='ol'&&G.go===1&&!G.sk){G.sk=1;net({k:'ko',g:G.seed})}if(G.fl>0)G.fl--;if(G.os>0)G.os--;if(G.mt>0)G.mt--;if(!REP&&G.go&&RC&&!RC.done){if(MODE==='pc'&&!G.ud&&G.pc>best){best=G.pc;try{localStorage.setItem('stack.best.pc',best)}catch(e){}}saveRep()}}
 function update(dt){if(G.go)return;if(G.on)G.time+=dt;if(MODE==='ultra'&&G.time>=12e4){G.time=12e4;finish();return}
  if(curDir){const p=dirT;dirT+=dt;if(dirT>=S.das){const e=p>=S.das?dt:dirT-S.das;if(S.arr===0){while(mv(curDir,0));}else{acc+=e;while(acc>=S.arr){if(!mv(curDir,0)){acc=0;break}acc-=S.arr}}}}
  let gi=S.grav>0?S.grav:Infinity;if(held.ArrowDown)gi=S.sdf>=41?0:(S.grav>0?S.grav:1000)/S.sdf;
@@ -137,13 +140,13 @@ if(REP)txt('REPLAY ×'+REP.sp,14,430,'#f2d24a',B);txt('NEXT',438,24,L,F);G.q.sli
  if(G.go){x.fillStyle='rgba(8,11,22,.82)';x.fillRect(OX,0,300,600);
   txt(G.go===3?'対戦待機中':MODE==='ol'?(G.go===2?'YOU WIN':'YOU LOSE'):MODE==='vs'?(G.go===2?'YOU WIN '+fmt(G.time):'YOU LOSE'):MODE==='pc'?G.pc+' PC':G.go===2?(MODE==='ultra'?G.lines+' LINES':'CLEAR '+fmt(G.time)):'GAME OVER',OX+150,280,'#fff','bold 28px system-ui,sans-serif','center');
   txt('R キー / リスタートボタンで再挑戦',OX+150,320,L,'14px system-ui,sans-serif','center')}}
-const GK='ArrowLeft ArrowRight ArrowDown ArrowUp Space KeyX KeyZ KeyA KeyC ShiftLeft KeyR'.split(' ');
+const GK='ArrowLeft ArrowRight ArrowDown ArrowUp Space KeyX KeyZ KeyA KeyC ShiftLeft KeyR KeyU Backspace'.split(' ');
 addEventListener('keydown',e=>{if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||!GK.includes(e.code))return;e.preventDefault();if(!e.repeat)press(e.code)});
 addEventListener('keyup',e=>{if(GK.includes(e.code))release(e.code)});
 addEventListener('blur',()=>{for(const k in held)if(held[k])release(k)});
 const pad=document.getElementById('pad');
-const LB={ArrowLeft:'◀',ArrowDown:'▼',ArrowRight:'▶',Space:'落とす',KeyZ:'↺',ArrowUp:'↻',KeyA:'180°',KeyC:'HOLD'};
-const PD={ArrowLeft:[.12,.6,1.1],ArrowDown:[.27,.85,1.1],ArrowRight:[.42,.6,1.1],KeyC:[.6,.2,1],KeyA:[.85,.2,1],KeyZ:[.62,.62,1],ArrowUp:[.88,.62,1],Space:[.75,.87,1.1]};
+const LB={ArrowLeft:'◀',ArrowDown:'▼',ArrowRight:'▶',Space:'落とす',KeyZ:'↺',ArrowUp:'↻',KeyA:'180°',KeyC:'HOLD',KeyU:'戻す'};
+const PD={ArrowLeft:[.12,.6,1.1],ArrowDown:[.27,.85,1.1],ArrowRight:[.42,.6,1.1],KeyC:[.6,.2,1],KeyA:[.85,.2,1],KeyZ:[.62,.62,1],ArrowUp:[.88,.62,1],Space:[.75,.87,1.1],KeyU:[.12,.2,1]};
 let PL=JSON.parse(JSON.stringify(PD));
 try{const s=JSON.parse(localStorage.getItem('stack.pad'));if(s)Object.assign(PL,s)}catch(e){}
 let UD=null;try{UD=JSON.parse(localStorage.getItem('stack.pad.def'))}catch(e){}
